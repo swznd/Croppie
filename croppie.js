@@ -676,7 +676,7 @@
         self.elements.zoomer.setAttribute('aria-valuenow', self._currentZoom);
         applyCss();
 
-        if (self.options.enforceBoundary) {
+        if (self.options.enforceBoundary !== 'fit') {
             var boundaries = _getVirtualBoundaries.call(self, vpRect),
                 transBoundaries = boundaries.translate,
                 oBoundaries = boundaries.origin;
@@ -1006,7 +1006,7 @@
         return this.elements.preview.offsetHeight > 0 && this.elements.preview.offsetWidth > 0;
     }
 
-    function _updatePropertiesFromImage() {
+    function _updatePropertiesFromImage(reset, test) {
         var self = this,
             initialZoom = 1,
             cssReset = {},
@@ -1016,7 +1016,7 @@
             originReset = new TransformOrigin(),
             isVisible = _isVisible.call(self);
 
-        if (!isVisible || self.data.bound) {// if the croppie isn't visible or it doesn't need binding
+        if (!isVisible || (!reset && self.data.bound)) {// if the croppie isn't visible or it doesn't need binding
             return;
         }
 
@@ -1030,7 +1030,7 @@
 
         self._originalImageWidth = imgData.width;
         self._originalImageHeight = imgData.height;
-        self.data.orientation = getExifOrientation(self.elements.img);
+        if (!test) self.data.orientation = getExifOrientation(self.elements.img);
 
         if (self.options.enableZoom) {
             _updateZoomLimits.call(self, true);
@@ -1056,7 +1056,7 @@
 
     function _updateZoomLimits (initial) {
         var self = this,
-            minZoom = 0,
+            minZoom = self.options.minZoom || 0,
             maxZoom = self.options.maxZoom || 1.5,
             initialZoom,
             defaultInitialZoom,
@@ -1070,7 +1070,7 @@
         if (self.options.enforceBoundary) {
             minW = vpData.width / imgData.width;
             minH = vpData.height / imgData.height;
-            minZoom = Math.max(minW, minH);
+            minZoom = minZoom ? minZoom : self.options.enforceBoundary == 'fit' ? Math.min(minW, minH) : Math.max(minW, minH);
         }
 
         if (minZoom >= maxZoom) {
@@ -1130,7 +1130,7 @@
             w = vpLeft - ((imgDim.width - vpDim.width) / 2),
             h = vpTop - ((imgDim.height - vpDim.height) / 2),
             transform = new Transform(w, h, self._currentZoom);
-
+            
         css(self.elements.preview, CSS_TRANSFORM, transform.toString());
     }
 
@@ -1167,7 +1167,7 @@
             customDimensions = (data.outputWidth && data.outputHeight),
             outputWidthRatio = 1,
             outputHeightRatio = 1;
-
+            
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
 
@@ -1324,6 +1324,8 @@
             vpData = self.elements.viewport.getBoundingClientRect(),
             x1 = vpData.left - imgData.left,
             y1 = vpData.top - imgData.top,
+            x1 = x1 < 0 && self.options.enforceBoundary == 'fit' ? x1 * 2 : x1,
+            y1 = y1 < 0 && self.options.enforceBoundary == 'fit' ? y1 * 2 : y1,
             widthDiff = (vpData.width - self.elements.viewport.offsetWidth) / 2, //border
             heightDiff = (vpData.height - self.elements.viewport.offsetHeight) / 2,
             x2 = x1 + self.elements.viewport.offsetWidth + widthDiff,
@@ -1333,13 +1335,13 @@
         if (scale === Infinity || isNaN(scale)) {
             scale = 1;
         }
-
+        
         var max = self.options.enforceBoundary ? 0 : Number.NEGATIVE_INFINITY;
         x1 = Math.max(max, x1 / scale);
         y1 = Math.max(max, y1 / scale);
         x2 = Math.max(max, x2 / scale);
         y2 = Math.max(max, y2 / scale);
-
+        
         return {
             points: [fix(x1), fix(y1), fix(x2), fix(y2)],
             zoom: scale,
@@ -1367,7 +1369,7 @@
             vpRect = self.elements.viewport.getBoundingClientRect(),
             ratio = vpRect.width / vpRect.height,
             prom;
-
+            
         if (size === 'viewport') {
             data.outputWidth = vpRect.width;
             data.outputHeight = vpRect.height;
@@ -1581,6 +1583,9 @@
         },
         destroy: function () {
             return _destroy.call(this);
+        },
+        setCenter: function() {
+            _updatePropertiesFromImage.call(this, true, true);
         }
     });
 
