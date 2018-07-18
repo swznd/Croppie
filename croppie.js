@@ -1177,7 +1177,17 @@
         canvas.height = canvasHeight;
 
         if (data.backgroundColor) {
-            ctx.fillStyle = data.backgroundColor;
+            if (typeof data.backgroundColor === 'object') {
+                var gradient = ctx.createLinearGradient(canvasWidth, 0, 0, canvasHeight);
+                for (var i = 0; i < data.backgroundColor.length; i++) {
+                    gradient.addColorStop(i / (data.backgroundColor.length - 1), data.backgroundColor[i]);
+                }
+                ctx.fillStyle = gradient;
+            }
+            else {
+                ctx.fillStyle = data.backgroundColor;
+            }
+
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         }
 
