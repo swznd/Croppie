@@ -680,28 +680,34 @@
         if (self.options.enforceBoundary) {
             var boundaries = _getVirtualBoundaries.call(self, vpRect),
                 transBoundaries = boundaries.translate,
-                oBoundaries = boundaries.origin;
+                oBoundaries = boundaries.origin,
+                enforceBoundary = self.options.enforceBoundary;
 
-            if (self.options.enforceBoundary == 'fit') {
+            if (self.options.enforceBoundary == 'container') {
+                enforceBoundary = vpRect.width > vpRect.height ? 'height' : 'width';
+            }
+
+
+            if (enforceBoundary == 'fit') {
                 var fitLimit = Math.max(vpRect.width / imgData.width, vpRect.height / imgData.height);
             }
             
-            if (transform.x >= transBoundaries.maxX && (!fitLimit || (fitLimit && (fitLimit < transform.scale || imgData.width > imgData.height)))) {
+            if (enforceBoundary != 'height' && transform.x >= transBoundaries.maxX && (!fitLimit || (fitLimit && (fitLimit < transform.scale || imgData.width > imgData.height)))) {
                 origin.x = oBoundaries.minX;
                 transform.x = transBoundaries.maxX;
             }
 
-            if (transform.x <= transBoundaries.minX && (!fitLimit || (fitLimit && (fitLimit < transform.scale || imgData.width > imgData.height)))) {
+            if (enforceBoundary != 'height' && transform.x <= transBoundaries.minX && (!fitLimit || (fitLimit && (fitLimit < transform.scale || imgData.width > imgData.height)))) {
                 origin.x = oBoundaries.maxX;
                 transform.x = transBoundaries.minX;
             }
 
-            if (transform.y >= transBoundaries.maxY && (!fitLimit || (fitLimit && (fitLimit < transform.scale || imgData.width < imgData.height)))){
+            if (enforceBoundary != 'width' && transform.y >= transBoundaries.maxY && (!fitLimit || (fitLimit && (fitLimit < transform.scale || imgData.width < imgData.height)))){
                 origin.y = oBoundaries.minY;
                 transform.y = transBoundaries.maxY;
             }
 
-            if (transform.y <= transBoundaries.minY && (!fitLimit || (fitLimit && (fitLimit < transform.scale || imgData.width < imgData.height)))) {
+            if (enforceBoundary != 'width' && transform.y <= transBoundaries.minY && (!fitLimit || (fitLimit && (fitLimit < transform.scale || imgData.width < imgData.height)))) {
                 origin.y = oBoundaries.maxY;
                 transform.y = transBoundaries.minY;
             }
@@ -807,12 +813,13 @@
                 left = transform.x + deltaX;
 
             if (self.options.enforceBoundary) {
-                if (vpRect.top > imgRect.top + deltaY && vpRect.bottom < imgRect.bottom + deltaY) {
-                    transform.y = top;
+                console.log('a', (vpRect.top > imgRect.top + deltaY && vpRect.bottom < imgRect.bottom + deltaY), (self.options.enforceBoundary == 'container' && vpRect.width <= vpRect.height))
+                if ((vpRect.top > imgRect.top + deltaY && vpRect.bottom < imgRect.bottom + deltaY) || (self.options.enforceBoundary == 'container' && vpRect.width <= vpRect.height)) {
+                    transform.y = vpRect.top < imgRect.top + deltaY && vpRect.bottom > imgRect.bottom + deltaY ? top : transform.y;
                 }
 
-                if (vpRect.left > imgRect.left + deltaX && vpRect.right < imgRect.right + deltaX) {
-                    transform.x = left;
+                if ((vpRect.left > imgRect.left + deltaX && vpRect.right < imgRect.right + deltaX) || (self.options.enforceBoundary == 'container' && vpRect.width >= vpRect.height)) {
+                    transform.x = vpRect.left < imgRect.left + deltaX && vpRect.right > imgRect.right + deltaX ? left : transform.x;
                 }
             }
             else {
