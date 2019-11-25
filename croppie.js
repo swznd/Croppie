@@ -815,11 +815,11 @@
             if (self.options.enforceBoundary) {
                 console.log('a', (vpRect.top > imgRect.top + deltaY && vpRect.bottom < imgRect.bottom + deltaY), (self.options.enforceBoundary == 'container' && vpRect.width <= vpRect.height))
                 if ((vpRect.top > imgRect.top + deltaY && vpRect.bottom < imgRect.bottom + deltaY) || (self.options.enforceBoundary == 'container' && vpRect.width <= vpRect.height)) {
-                    transform.y = vpRect.top < imgRect.top + deltaY && vpRect.bottom > imgRect.bottom + deltaY ? top : transform.y;
+                    transform.y = (vpRect.top < imgRect.top + deltaY && vpRect.bottom > imgRect.bottom + deltaY) || self.options.enforceBoundary != 'container' ? top : transform.y;
                 }
 
                 if ((vpRect.left > imgRect.left + deltaX && vpRect.right < imgRect.right + deltaX) || (self.options.enforceBoundary == 'container' && vpRect.width >= vpRect.height)) {
-                    transform.x = vpRect.left < imgRect.left + deltaX && vpRect.right > imgRect.right + deltaX ? left : transform.x;
+                    transform.x = (vpRect.left < imgRect.left + deltaX && vpRect.right > imgRect.right + deltaX) || self.options.enforceBoundary != 'container' ? left : transform.x;
                 }
             }
             else {
